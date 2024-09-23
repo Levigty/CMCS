@@ -1,0 +1,72 @@
+work_dir: /data2/guoty/CACA-work-dir/CACA-STGCN/ntu120_cv/3views/512_2048_512_2048_0.996_2_10/pretext
+
+# feeder
+train_feeder: feeder.ntu_feeder.Feeder_dual
+train_feeder_args:
+  data_path: /data1/gty/action_dataset/ntu120_frame50/xset/train_position.npy
+  label_path: /data1/gty/action_dataset/ntu120_frame50/xset/train_label.pkl
+  shear_amplitude: 0.5
+  temperal_padding_ratio: 6
+  mmap: True
+
+# memory feeder for knn
+mem_train_feeder: feeder.ntu_feeder.Feeder_single
+mem_train_feeder_args:
+  data_path: /data1/gty/action_dataset/ntu120_frame50/xset/train_position.npy
+  label_path: /data1/gty/action_dataset/ntu120_frame50/xset/train_label.pkl
+  shear_amplitude: -1
+  temperal_padding_ratio: -1
+  mmap: True
+mem_test_feeder: feeder.ntu_feeder.Feeder_single
+mem_test_feeder_args:
+  data_path: /data1/gty/action_dataset/ntu120_frame50/xset/val_position.npy
+  label_path: /data1/gty/action_dataset/ntu120_frame50/xset/val_label.pkl
+  shear_amplitude: -1
+  temperal_padding_ratio: -1
+  mmap: True
+
+# model
+model: net.caca_three_modal.CACA_3views
+model_args:
+  base_encoder: net.st_gcn.Model
+  pretrain: True
+  feature_dim: 512
+  projection_hidden_size: 2048
+  projection_size: 512
+  prediction_hidden_size: 2048
+  moving_average_decay: 0.996
+  use_momentum: True
+  in_channels: 3
+  hidden_channels: 16 # 1/4 x channels of standard stgcn
+  num_class: 120
+  dropout: 0.5
+  graph_args:
+    layout: 'ntu-rgb+d'
+    strategy: 'spatial'
+  edge_importance_weighting: True
+  topk: 2
+  lamb: 10
+
+# optim
+nesterov: False
+weight_decay: 1e-4
+base_lr: 0.1
+optimizer: SGD
+step: [300]
+
+# training
+device: [4]
+batch_size: 128
+test_batch_size: 128
+num_epoch: 80
+start_epoch: 0
+stream: 'all'
+cross_epoch: 40
+
+# log
+save_interval: 5
+eval_interval: -1
+
+# knn
+knn_monitor: True
+knn_interval: 1000
